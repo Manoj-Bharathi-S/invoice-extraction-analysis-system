@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  # The FastAPI Backend
+  api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: doc-intelligence-api
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../saved_models:/app/saved_models
+      - ../data:/app/data
+      - ../governance:/app/governance
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  # The Streamlit Frontend Dashboard
+  frontend:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: doc-intelligence-frontend
+    command: streamlit run frontend/app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - ../governance:/app/governance
+    depends_on:
+      - api
+    environment:
+      # Tell Streamlit to route API calls to the 'api' container, not localhost
+      - API_URL=http://api:8000/api/v1/process-invoice
