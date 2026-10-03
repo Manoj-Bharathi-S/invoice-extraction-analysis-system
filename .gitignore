@@ -4,3 +4,4 @@ __pycache__/
 venv/
 # ml_pipeline/saved_models/*.pkl
 ml_pipeline/data/*.db
+    
