@@ -10,6 +10,11 @@ from extraction.fuzzy_matcher import parse_text_to_features
 from ml_pipeline.inference.predict import run_inference
 from governance.audit_logger import log_transaction
 # ... (keep existing setup and extraction imports) ...
+import sys
+from pathlib import Path
+import uvicorn
+import sqlite3
+from governance.audit_logger import DB_PATH
 
 
 
@@ -69,11 +74,21 @@ async def process_invoice(file: UploadFile = File(...)):
 
 
 
+@app.get("/api/v1/audit-ledger")
+def get_audit_ledger():
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        # Fetch the logs as a list of dictionaries
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        cursor.execute("SELECT id, timestamp, filename, expected_freight_cost, risk_flag, current_hash FROM audit_ledger ORDER BY id DESC")
+        rows = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return rows
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
-import sys
-from pathlib import Path
-import uvicorn
 
 # Ensure the root of 'enterprise-doc-intelligence' is in Python's search path
 project_root = Path(__file__).resolve().parent.parent

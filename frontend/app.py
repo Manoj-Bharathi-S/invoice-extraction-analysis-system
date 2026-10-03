@@ -3,10 +3,13 @@ import requests
 import pandas as pd
 import sqlite3
 from pathlib import Path
+import os
 
-# Configuration
-API_URL = "http://localhost:8000/api/v1/process-invoice"
+# Use the Docker network API_URL if available, otherwise fallback to localhost
+API_URL = os.getenv("API_URL", "http://localhost:8000/api/v1/process-invoice")
 DB_PATH = Path(__file__).resolve().parent.parent / "governance" / "audit_ledger.db"
+
+# ... (keep the rest of the Streamlit code exactly the same) ...
 
 st.set_page_config(page_title="Enterprise Document Intelligence", layout="wide")
 
@@ -14,7 +17,7 @@ st.title("🏛️ Enterprise Document Intelligence Hub")
 st.markdown("Automated AI Ingestion, ML Cost Prediction, and Cryptographic Governance.")
 
 # Create two distinct portals using tabs
-tab1, tab2 = st.tabs(["📤 Vendor Portal (Upload)", "🛡️ Sentinel Governance (Audit)"])
+tab1, tab2 = st.tabs(["📤 Vendor Portal (Upload)", "Audit"])
 
 with tab1:
     st.header("Submit Vendor Invoice")
@@ -53,15 +56,16 @@ with tab2:
     
     if st.button("Refresh Ledger"):
         try:
-            conn = sqlite3.connect(DB_PATH)
-            # Load the ledger into a Pandas DataFrame
-            df = pd.read_sql_query("SELECT id, timestamp, filename, expected_freight_cost, risk_flag, current_hash FROM audit_ledger ORDER BY id DESC", conn)
-            conn.close()
+            # Replace local SQLite read with an API call
+            LEDGER_URL = API_URL.replace("/process-invoice", "/audit-ledger")
+            response = requests.get(LEDGER_URL)
             
-            # Format the output for the dashboard
-            df['expected_freight_cost'] = df['expected_freight_cost'].apply(lambda x: f"${x:,.2f}")
-            df['risk_flag'] = df['risk_flag'].apply(lambda x: "🚨 FLAG" if x else "✅ CLEAR")
-            
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            if response.status_code == 200 and response.json():
+                df = pd.DataFrame(response.json())
+                df['expected_freight_cost'] = df['expected_freight_cost'].apply(lambda x: f"${x:,.2f}")
+                df['risk_flag'] = df['risk_flag'].apply(lambda x: "🚨 FLAG" if x else "✅ CLEAR")
+                st.dataframe(df, use_container_width=True, hide_index=True)
+            else:
+                st.warning("No audit logs found. Process an invoice first.")
         except Exception as e:
-            st.warning("No audit logs found. Process an invoice first to generate the ledger.")
+            st.error(f"Failed to fetch ledger: {e}")
