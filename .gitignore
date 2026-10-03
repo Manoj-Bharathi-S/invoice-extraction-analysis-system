@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.env
+venv/
+# ml_pipeline/saved_models/*.pkl
+ml_pipeline/data/*.db

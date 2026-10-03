@@ -1,0 +1,25 @@
+# ── Web Framework & API ─────────────────────────────────────────────────
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+
+# ── Frontend ─────────────────────────────────────────────────────────────
+streamlit
+requests
+
+# ── OCR & Document Processing ────────────────────────────────────────────
+pytesseract
+pdf2image
+Pillow
+thefuzz
+
+# ── Machine Learning ─────────────────────────────────────────────────────
+scikit-learn
+pandas
+numpy
+joblib
+
+# ── Optional: Adversarial Testing (comment out if not needed) ────────────
+# torch
+# torchvision
